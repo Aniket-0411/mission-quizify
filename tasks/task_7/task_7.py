@@ -72,6 +72,9 @@ class QuizGenerator:
         """
         self.llm = VertexAI(
             ############# YOUR CODE HERE ############
+            model_name= "gemini-pro",
+            temperature= 0.8,
+            max_output_tokens = 200,
         )
         
     def generate_question_with_vectorstore(self):
@@ -99,35 +102,19 @@ class QuizGenerator:
 
         Note: Handle cases where the vectorstore is not provided by raising a ValueError.
         """
-        ############# YOUR CODE HERE ############
-        # Initialize the LLM from the 'init_llm' method if not already initialized
-        # Raise an error if the vectorstore is not initialized on the class
-        ############# YOUR CODE HERE ############
+    
+        if not self.llm:
+            self.init_llm()
+        if not self.vectorstore:
+            st.error("Vectorstore not provided")
         
         from langchain_core.runnables import RunnablePassthrough, RunnableParallel
-
-        ############# YOUR CODE HERE ############
-        # Enable a Retriever using the as_retriever() method on the VectorStore object
-        # HINT: Use the vectorstore as the retriever initialized on the class
-        ############# YOUR CODE HERE ############
-        
-        ############# YOUR CODE HERE ############
-        # Use the system template to create a PromptTemplate
-        # HINT: Use the .from_template method on the PromptTemplate class and pass in the system template
-        ############# YOUR CODE HERE ############
-        
-        # RunnableParallel allows Retriever to get relevant documents
-        # RunnablePassthrough allows chain.invoke to send self.topic to LLM
+        retriever = self.vectorstore.db.as_retriever()
+        prompt = PromptTemplate.from_template(self.system_template)
         setup_and_retrieval = RunnableParallel(
             {"context": retriever, "topic": RunnablePassthrough()}
         )
-        
-        ############# YOUR CODE HERE ############
-        # Create a chain with the Retriever, PromptTemplate, and LLM
-        # HINT: chain = RETRIEVER | PROMPT | LLM 
-        ############# YOUR CODE HERE ############
-
-        # Invoke the chain with the topic as input
+        chain = setup_and_retrieval | prompt | self.llm 
         response = chain.invoke(self.topic)
         return response
     
@@ -141,7 +128,7 @@ if __name__ == "__main__":
     
     embed_config = {
         "model_name": "textembedding-gecko@003",
-        "project": "YOUR-PROJECT-ID-HERE",
+        "project": "gemini-quizzify-425417",
         "location": "us-central1"
     }
     
